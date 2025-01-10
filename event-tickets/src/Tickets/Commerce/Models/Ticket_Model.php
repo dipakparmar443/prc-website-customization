@@ -52,8 +52,8 @@ class Ticket_Model extends Base {
 			$event_id = $post_meta['_tec_tickets_commerce_event'][0];
 
 			// Fetch the ACF fields for the event
-			$discount_event_price_enable = get_field('field_677ffdefc8581', $event_id);	
-			$discount_event_price = get_field('field_677d122159883', $event_id);
+			$discount_event_price_enable = get_field('discounted_price_for_members_enable', $event_id);	
+			$discount_event_price = get_field('discounted_price_for_members', $event_id);
 
 			// Check conditions: user logged in, not an admin, discount enabled, and valid membership
 			if(is_user_logged_in() && !is_admin() && $discount_event_price_enable && pr_membership() == true){
@@ -63,7 +63,7 @@ class Ticket_Model extends Base {
 					'sale_price' => $discount_event_price,
 				 ];
 			}
-
+			
 		} catch ( \Exception $e ) {
 			return [];
 		}

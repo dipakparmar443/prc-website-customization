@@ -56,8 +56,8 @@ $classes = [
 $has_suffix = ! empty( $ticket->price_suffix );
 
 // Retrieve ACF fields for the given post ID
-$discount_event_price_enable = get_field('field_677ffdefc8581', $post_id);	
-$discount_event_price = get_field('field_677d122159883', $post_id);
+$discount_event_price_enable = get_field('discounted_price_for_members_enable', $post_id);	
+$discount_event_price = get_field('discounted_price_for_members', $post_id);
 
 // Check if the user is logged in, discount is enabled, and membership is valid
 if(is_user_logged_in() && $discount_event_price_enable && pr_membership() == true){

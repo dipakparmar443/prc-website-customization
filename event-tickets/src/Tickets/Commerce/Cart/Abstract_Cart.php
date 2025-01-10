@@ -53,10 +53,11 @@ abstract class Abstract_Cart implements Cart_Interface {
 					if ( ! $item['obj'] instanceof Ticket_Object ) {
 						return null;
 					}
+
 					if(is_user_logged_in() ){
 						// Fetch ACF fields using appropriate keys
-						$discount_event_price_enable = get_field('field_677ffdefc8581', $item['obj']->get_event_id());	
-						$discount_event_price = get_field('field_677d122159883', $item['obj']->get_event_id());
+						$discount_event_price_enable = get_field('discounted_price_for_members_enable', $item['obj']->get_event_id());	
+						$discount_event_price = get_field('discounted_price_for_members', $item['obj']->get_event_id());
 						
 						// Check if discount is enabled and the user has a valid membership
 						if( $discount_event_price_enable && pr_membership() == true){
@@ -64,13 +65,13 @@ abstract class Abstract_Cart implements Cart_Interface {
 							$item['obj']->price = $discount_event_price == "" ? 0 :  $discount_event_price;
 						}	
 					}
+
 					$sub_total_value = Value::create();
 					$sub_total_value->set_value( $item['obj']->price );
 
 					$item['event_id']  = $item['obj']->get_event_id();
 					$item['sub_total'] = $sub_total_value->sub_total( $item['quantity'] );
 					$item['type']      = 'ticket';
-
 					return $item;
 				},
 				$items
@@ -81,74 +82,23 @@ abstract class Abstract_Cart implements Cart_Interface {
 	}
 
 	/**
-	 * Get the total value of the cart, including additional values such as fees or discounts.
+	 * Get the total of the cart.
 	 *
-	 * This method calculates the total by first computing the subtotal from all items in the cart,
-	 * and then applying any additional values (e.g., fees or discounts) provided via the `tec_tickets_commerce_get_cart_additional_values` filter.
-	 *
-	 * @since 5.18.0 Refactored logic, to include a new filter.
 	 * @since 5.10.0
 	 *
-	 * @return float The total value of the cart, or null if there are no items.
+	 * @return null|float
 	 */
 	public function get_cart_total() {
-		$subtotal = $this->get_cart_subtotal();
-		if ( ! $subtotal ) {
-			return 0.0;
+		if ( null !== $this->cart_total ) {
+			return $this->cart_total;
 		}
 
 		$items = $this->get_items_in_cart( true );
 
-		// Extract subtotals from the cart items.
-		$sub_totals = array_filter( wp_list_pluck( $items, 'sub_total' ) );
-
-		/**
-		 * Filters the additional values in the cart in order to add additional fees or discounts.
-		 *
-		 * Additional values must be instances of the `Value` class to ensure consistent behavior.
-		 *
-		 * @since 5.18.0
-		 *
-		 * @param Value[] $values     An array of `Value` instances representing additional fees or discounts.
-		 * @param array   $items      The items currently in the cart.
-		 * @param Value   $sub_totals The total of the subtotals from the items.
-		 */
-		$additional_values = apply_filters(
-			'tec_tickets_commerce_get_cart_additional_values',
-			[],
-			$items,
-			Value::create()->total( $sub_totals )
-		);
-
-		// Combine the subtotals and additional values.
-		$total_value = Value::create()->total( array_merge( $sub_totals, $additional_values ) );
-
-		$this->cart_total = $total_value->get_decimal();
-
-		return $total_value->get_decimal();
-	}
-
-	/**
-	 * Get the subtotal of the cart items.
-	 *
-	 * The subtotal is the sum of all item subtotals without additional values like fees or discounts.
-	 *
-	 * @since 5.18.0 Refactored to avoid cumulative calculations.
-	 *
-	 * @return float The subtotal of the cart.
-	 */
-	public function get_cart_subtotal(): float {
-		// Reset cart_total to ensure it's not cumulative across calls.
-		$this->cart_total = 0.0;
-
-		$items = $this->get_items_in_cart( true );
-
-		// If no items in the cart, return null.
 		if ( empty( $items ) ) {
-			return 0.0;
+			return null;
 		}
 
-		// Calculate the total from the subtotals of each item.
 		foreach ( $items as $item ) {
 			$this->cart_total += $item['sub_total']->get_decimal();
 		}
