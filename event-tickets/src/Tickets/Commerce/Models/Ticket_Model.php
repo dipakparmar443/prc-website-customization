@@ -47,6 +47,23 @@ class Ticket_Model extends Base {
 				'price'      => Arr::get( $post_meta, [ Ticket::$price_meta_key, 0 ] ),
 				'sale_price' => get_post_meta( $post_id, Ticket::$sale_price_key, true ),
 			];
+
+			// Retrieve the event ID from the post meta
+			$event_id = $post_meta['_tec_tickets_commerce_event'][0];
+
+			// Fetch the ACF fields for the event
+			$discount_event_price_enable = get_field('field_677ffdefc8581', $event_id);	
+			$discount_event_price = get_field('field_677d122159883', $event_id);
+
+			// Check conditions: user logged in, not an admin, discount enabled, and valid membership
+			if(is_user_logged_in() && !is_admin() && $discount_event_price_enable && pr_membership() == true){
+				// Update properties with the discount price
+				$properties = [
+					'price'      => $discount_event_price,
+					'sale_price' => $discount_event_price,
+				 ];
+			}
+
 		} catch ( \Exception $e ) {
 			return [];
 		}

@@ -53,7 +53,17 @@ abstract class Abstract_Cart implements Cart_Interface {
 					if ( ! $item['obj'] instanceof Ticket_Object ) {
 						return null;
 					}
-
+					if(is_user_logged_in() ){
+						// Fetch ACF fields using appropriate keys
+						$discount_event_price_enable = get_field('field_677ffdefc8581', $item['obj']->get_event_id());	
+						$discount_event_price = get_field('field_677d122159883', $item['obj']->get_event_id());
+						
+						// Check if discount is enabled and the user has a valid membership
+						if( $discount_event_price_enable && pr_membership() == true){
+							$item['obj']->regular_price = $discount_event_price == "" ? 0 :  $discount_event_price;
+							$item['obj']->price = $discount_event_price == "" ? 0 :  $discount_event_price;
+						}	
+					}
 					$sub_total_value = Value::create();
 					$sub_total_value->set_value( $item['obj']->price );
 
