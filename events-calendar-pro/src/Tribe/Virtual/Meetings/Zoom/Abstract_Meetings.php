@@ -284,6 +284,17 @@ class Abstract_Meetings {
 			'timezone'   => $event->timezone,
 			'duration'   => $duration,
 			'password'   => $password,
+			'settings'   => [
+		        'allow_multiple_devices' => false, // Restrict attendees to one device
+		        'panelist_authentication' => true,
+		        'meeting_authentication' => true,
+				'registration_type' => 1,
+				'approval_type' => 0,
+				'registrants_email_notification' =>false,
+				'registrants_confirmation_email' =>false,
+				'private_meeting' =>false,
+				'join_before_host' =>false,
+		    ],
 		];
 
 		/**
@@ -425,6 +436,17 @@ class Abstract_Meetings {
 			'password'          => $body['password'],
 			'host_email'        => $body['host_email'],
 			'alternative_hosts' => $body['settings']['alternative_hosts'],
+			'settings'   => [				
+		        'allow_multiple_devices' => false, // Restrict attendees to one device
+		        'panelist_authentication' => true,
+		        'meeting_authentication' => true,
+				'registration_type' => 1,
+				'approval_type' => 0,
+				'registrants_email_notification' =>false,
+				'registrants_confirmation_email' =>false,
+				'private_meeting' =>false,
+				'join_before_host' =>false,
+		    ],
 		];
 
 		// Dial-in numbers are NOT a given and should not be assumed.
@@ -597,6 +619,17 @@ class Abstract_Meetings {
 			'timezone'          => $meeting_data['timezone'] ?? null,
 			'duration'          => $meeting_data['duration'] ?? null,
 			'alternative_hosts' => $meeting_data['settings']['alternative_hosts'] ?? null,
+			'settings'   => [				
+		        'allow_multiple_devices' => false, // Restrict attendees to one device
+		        'panelist_authentication' => true,
+		        'meeting_authentication' => true,
+				'registration_type' => 1,
+				'approval_type' => 0,
+				'registrants_email_notification' =>false,
+				'registrants_confirmation_email' =>false,
+				'private_meeting' =>false,
+				'join_before_host' =>false,
+		    ],
 		];
 
 		$diff = array_diff_assoc( $event_body, $meeting_body );
@@ -611,6 +644,15 @@ class Abstract_Meetings {
 		// Unset the alternative hosts and set in expected location for the API.
 		unset( $event_body['alternative_hosts'] );
 		$event_body['settings']['alternative_hosts'] = esc_attr( implode( ";", $alternative_hosts ) );
+		$event_body['settings']['allow_multiple_devices'] = false;
+		$event_body['settings']['panelist_authentication'] = true;
+		$event_body['settings']['meeting_authentication'] = true;
+		$event_body['settings']['registration_type'] = 1;
+		$event_body['settings']['approval_type'] = 0;
+		$event_body['settings']['registrants_email_notification'] = false;
+		$event_body['settings']['registrants_confirmation_email'] = false;
+		$event_body['settings']['private_meeting'] = false;
+		$event_body['settings']['join_before_host'] = false;
 
 		/**
 		 * Filters the contents of the request that will be made to the Zoom API to update a meeting link.
