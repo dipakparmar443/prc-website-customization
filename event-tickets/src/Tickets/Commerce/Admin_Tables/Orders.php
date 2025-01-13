@@ -583,73 +583,73 @@ class Orders extends WP_List_Table {
 	 */
 	public function maybe_generate_csv(): void {
 		// Early bail: Check if the necessary GET parameters are not set.
-		if ( empty( $_GET['orders_csv'] ) || empty( $_GET['orders_csv_nonce'] ) || empty( $_GET['post_id'] ) ) {
+		if ( empty( $_GET['orders_csv'] ) || empty( $_GET['orders_csv_nonce'] ) || empty( $_GET['event_id'] ) ) {
 			return;
 		}
-
-		$event_id = absint( $_GET['post_id'] );
-
-		/**
-		 * Filters the event ID before using it to fetch orders.
-		 *
-		 * @since 5.8.1
-		 *
-		 * @param int $event_id The event ID.
-		 */
-		$event_id = apply_filters( 'tec_tickets_filter_event_id', $event_id );
-
-		// Early bail: Verify the event ID and the nonce.
-		if ( empty( $event_id ) || ! wp_verify_nonce( $_GET['orders_csv_nonce'], 'orders_csv_nonce' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			return;
-		}
-
-		$post_id     = tribe_get_request_var(
-			'event_id',
-			tribe_get_request_var(
-				'post_id',
-				0
-			)
-		);
-		$product_ids = explode(
-			',',
-			tribe_get_request_var(
-				'product_ids',
-				''
-			)
-		);
-
-		// Initialize arguments for fetching orders.
-		$arguments = [
-			'status'  => 'any',
-			'events'  => $post_id,
-			'tickets' => ! empty( $product_ids ) ? $product_ids : null,
-			'orderby' => tribe_get_request_var( 'orderby', '' ),
-			'order'   => tribe_get_request_var( 'order', '' ),
-		];
-
-		/**
-		 * Filters the arguments for the order report export.
-		 *
-		 * @since 5.8.1
-		 *
-		 * @param array $arguments The arguments for order retrieval.
-		 */
-		$arguments = apply_filters( 'tec_tc_order_report_export_args', $arguments );
-
-		// Fetch orders using the repository.
-		$orders_repository = tec_tc_orders()->by_args( $arguments );
-		$items             = $orders_repository->all();
-
-		// Format the orders data for CSV.
-		$formatted_data = $this->format_for_csv( $items );
+		$post_id = $_GET['event_id'];
+		$event_id = $_GET['event_id'];
+		$event    = get_post( $post_id );
 
 		// Get the event post for filename.
-		$event    = get_post( $post_id );
+		$post_date = $event->post_date;
 		$filename = sanitize_title( $event->post_title ) . '-' . __(
 			'orders',
 			'event-tickets'
 		) . '.csv';
 
+		$formatted_data[] = ['First name', 'Last name', 'Registrant email', 'Register date (UTC)', 'Ticket name', 'Job Title', 'Organization', 'What is one thing you would like this session to address?', 'Source of registration'];
+		//$formatted_data[] = ['First name', 'Last name', 'Registrant email', 'Register date (UTC)', 'Ticket name', 'Job Title', 'Organization', 'What is one thing you would like this session to address?', 'Source of registration'];
+		
+		if ( ! defined( 'ABSPATH' ) ) {
+		    // WordPress is not loaded, include wp-load.php to load WordPress
+		    require_once( ABSPATH.'/wp-load.php');
+		}
+
+		global $wpdb;
+
+		// Example query to fetch posts from the 'tec_tc_order' post type
+		$query = "
+		    SELECT p.ID, p.post_date, p.post_title
+		    FROM {$wpdb->posts} AS p
+		    WHERE p.post_type = 'tec_tc_order'
+		    AND p.post_status = 'tec-tc-completed'
+		    AND EXISTS (
+		        SELECT 1 
+		        FROM {$wpdb->prefix}postmeta AS pm
+		        WHERE pm.post_id = p.ID
+		        AND pm.meta_key = '_tec_tc_order_events_in_order'
+		        AND pm.meta_value = %d
+		    )
+		    ORDER BY p.post_date DESC
+		";
+
+		$prepared_query = $wpdb->prepare($query, $event_id);
+
+		// Execute the query
+		$results = $wpdb->get_results($prepared_query, ARRAY_A);
+		if ($results) {
+		    foreach ($results as $row) {
+		    	$order_post_id = $row['ID'];
+				$first_name = get_post_meta( $order_post_id, '_tec_tc_order_purchaser_first_name', true );
+		        $last_name = get_post_meta( $order_post_id, '_tec_tc_order_purchaser_last_name', true );
+		        $email = get_post_meta( $order_post_id, '_tec_tc_order_purchaser_email', true );
+
+		        $post_date = get_the_date('Y-m-d H:i:s', $order_post_id);
+		        
+		        $tickets_id = get_post_meta( $order_post_id, '_tec_tc_order_tickets_in_order', true );
+		        $tickets_name = get_the_title($tickets_id);
+
+		        $jobtitle = get_post_meta( $order_post_id, 'purchaser_jobtitle', true );
+		        $organization = get_post_meta( $order_post_id, 'purchaser_organization', true );
+		        $session_address = get_post_meta( $order_post_id, 'purchaser_session_address', true );
+		        $source = 'N/A';
+		        
+		        $formatted_data[] = [ "{$first_name}", "{$last_name}", "{$email}", "{$post_date}", "{$tickets_name}", "{$jobtitle}", "{$organization}", "{$session_address}", "{$source}"];
+		    }
+		}
+		
+		/*print_r($formatted_data);
+		exit;*/
 		// Generate and output the CSV file.
 		$this->generate_csv_file( $formatted_data, $filename );
 	}
