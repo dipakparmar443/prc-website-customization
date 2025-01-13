@@ -450,7 +450,15 @@ class Order extends Abstract_Order {
 		);
 
 		$total = $this->get_value_total( array_filter( $items ) );
+		if( is_user_logged_in() ){
 
+			if (isset($_COOKIE['session_address'])) {
+				$purchaser['purchaser_session_address'] = $_COOKIE['session_address'];
+			}
+			if (isset($_COOKIE['consent'])) {
+				$purchaser['purchaser_consent'] = $_COOKIE['consent'];
+			}	
+		}
 		$order_args = [
 			'title'                => $this->generate_order_title( $original_cart_items, $cart->get_cart_hash() ),
 			'total_value'          => $total->get_decimal(),
@@ -464,6 +472,10 @@ class Order extends Abstract_Order {
 			'purchaser_first_name' => $purchaser['purchaser_first_name'],
 			'purchaser_last_name'  => $purchaser['purchaser_last_name'],
 			'purchaser_email'      => $purchaser['purchaser_email'],
+			'purchaser_jobtitle'      => $purchaser['purchaser_jobtitle'],
+			'purchaser_organization'      => $purchaser['purchaser_organization'],
+			'purchaser_session_address'      => $purchaser['purchaser_session_address'],
+			'purchaser_consent'      => $purchaser['purchaser_consent'],
 		];
 
 		$order = $this->create( $gateway, $order_args );

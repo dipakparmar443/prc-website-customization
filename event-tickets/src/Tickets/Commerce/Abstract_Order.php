@@ -100,6 +100,16 @@ abstract class Abstract_Order {
 			$purchaser['purchaser_last_name']  = $user->last_name;
 			$purchaser['purchaser_email']      = $user->user_email;
 
+			$purchaser['purchaser_jobtitle']      = get_user_meta( $user->ID, 'job_title', true );
+			$purchaser['purchaser_organization']      = get_user_meta( $user->ID, 'organization', true );
+
+			if (isset($_COOKIE['session_address'])) {
+				$purchaser['purchaser_session_address'] = $_COOKIE['session_address'];
+			}
+			if (isset($_COOKIE['consent'])) {
+				$purchaser['purchaser_consent'] = $_COOKIE['consent'];
+			}
+
 			return $purchaser;
 		}
 
@@ -117,12 +127,28 @@ abstract class Abstract_Order {
 			return new WP_Error( 'invalid-purchaser-info', __( 'Please provide a valid purchaser email.', 'event-tickets' ), [ 'status' => 400 ] );
 		}
 
+		if ( ! isset( $purchaser_data['jobtitle'] ) || empty( $purchaser_data['jobtitle'] ) ) {
+			return new \WP_Error( 'invalid-purchaser-info', __( 'Please provide a valid purchaser jobtitle.', 'event-tickets' ), [ 'status' => 400 ] );
+		}
+		if ( ! isset( $purchaser_data['organization'] ) || empty( $purchaser_data['organization'] ) ) {
+			return new \WP_Error( 'invalid-purchaser-info', __( 'Please provide a valid purchaser organization.', 'event-tickets' ), [ 'status' => 400 ] );
+		}
+		if ( ! isset( $purchaser_data['session_address'] ) || empty( $purchaser_data['session_address'] ) ) {
+			return new \WP_Error( 'invalid-purchaser-info', __( 'Please provide a valid purchaser session_address.', 'event-tickets' ), [ 'status' => 400 ] );
+		}
+		if ( ! isset( $purchaser_data['consent'] ) || empty( $purchaser_data['consent'] ) ) {
+			return new \WP_Error( 'invalid-purchaser-info', __( 'Please provide a valid purchaser consent.', 'event-tickets' ), [ 'status' => 400 ] );
+		}
 		$purchaser = [
 			'purchaser_user_id'    => 0,
-			'purchaser_full_name'  => $purchaser_data['name'],
+			'purchaser_full_name'  => $purchaser_data['name'].' '.$purchaser_data['last_name'],
 			'purchaser_first_name' => $purchaser_data['name'],
-			'purchaser_last_name'  => '',
+			'purchaser_last_name'  => $purchaser_data['last_name'],
 			'purchaser_email'      => sanitize_email( $purchaser_data['email'] ),
+			'purchaser_jobtitle'      => $purchaser_data['jobtitle'],
+			'purchaser_organization'      => $purchaser_data['organization'],
+			'purchaser_session_address'      => $purchaser_data['session_address'],
+			'purchaser_consent'      => $purchaser_data['consent'],
 		];
 
 		/**

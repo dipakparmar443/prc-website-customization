@@ -178,7 +178,7 @@ tribe.tickets.commerce.gateway.free.checkout = {};
 
 		obj.hideNotice( obj.checkoutContainer );
 
-		tribe.tickets.loader.show( obj.checkoutContainer );
+		//tribe.tickets.loader.show( obj.checkoutContainer );
 
 		let order = await obj.handleCreateOrder();
 		obj.submitButton( false );
@@ -186,7 +186,7 @@ tribe.tickets.commerce.gateway.free.checkout = {};
 		if ( order.success ) {
 			window.location.replace( order.redirect_url );
 		} else {
-			tribe.tickets.loader.hide( obj.checkoutContainer );
+			//tribe.tickets.loader.hide( obj.checkoutContainer );
 			obj.showNotice( {}, order.message, '' );
 		}
 
@@ -224,7 +224,21 @@ tribe.tickets.commerce.gateway.free.checkout = {};
 	 *
 	 * @return {Object}
 	 */
-	obj.getPurchaserData = () => tribe.tickets.commerce.getPurchaserData( $( tribe.tickets.commerce.selectors.purchaserFormContainer ) );
+	//obj.getPurchaserData = () => tribe.tickets.commerce.getPurchaserData( $( tribe.tickets.commerce.selectors.purchaserFormContainer ) );
+	obj.getPurchaserData = () => {
+	    const purchaserForm = $(tribe.tickets.commerce.selectors.purchaserFormContainer);
+	    
+	    return {
+	        name: purchaserForm.find('input[name="purchaser-name"]').val(),
+	        last_name: purchaserForm.find('input[name="purchaser-last"]').val(),
+	        email: purchaserForm.find('input[name="purchaser-email"]').val(),
+	        jobtitle: purchaserForm.find('input[name="purchaser-jobtitle"]').val(),
+	        organization: purchaserForm.find('input[name="purchaser-organization"]').val(),
+	        //session_address: purchaserForm.find('input[name="purchaser-session_address"]').val(),
+	        session_address: purchaserForm.find('textarea#tec-tc-purchaser-session_address').val(),
+	        consent: purchaserForm.find('input[name="purchaser-consent"]').is(':checked') // assuming consent is a checkbox
+	    };
+	};
 
 	/**
 	 * Bind script loader to trigger script dependent methods.
